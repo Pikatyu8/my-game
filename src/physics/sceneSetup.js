@@ -10,7 +10,7 @@ export function setupScene(app, catTexture, engine) {
     sprite.anchor.set(0.5);
 
     // Начальное положение спрайта (чтобы было видно падение)
-    sprite.x = app.renderer.width / 2;
+    sprite.x = app.renderer.width / 4;
     sprite.y = 100;
 
     app.stage.addChild(sprite);
@@ -24,8 +24,8 @@ export function setupScene(app, catTexture, engine) {
         sprite.width,
         sprite.height,
         {
-            restitution: 0.4,
-            friction: 0.8,
+            restitution: 0.2,
+            friction: 0.1,
             frictionAir: 0.05,
             inertia: Infinity // Добавляем инерцию, чтобы кот не вращался
         }

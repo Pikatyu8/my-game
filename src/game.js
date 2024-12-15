@@ -18,7 +18,6 @@ export class Game {
 
                 this.renderer = initGraphics(this.app);
 
-                // Перемещаем вызов setupScene в then после loadResources
                 // Настройка сцены (после загрузки ресурсов)
                 this.sceneObjects = setupScene(this.app, this.catTexture, this.matterEngine);
 
@@ -26,7 +25,8 @@ export class Game {
                 this.physicsUpdater = initPhysics(this.matterEngine, this.sceneObjects);
 
                 // Добавляем управление игроком
-                this.playerMovement = initMovement(this.sceneObjects, this.app); // Исправлено: передаем this.sceneObjects
+                // Передаем и this.matterEngine
+                this.playerMovement = initMovement(this.sceneObjects, this.app, this.matterEngine);
 
                 // Добавляем функцию обновления в ticker
                 this.app.ticker.add((delta) => {

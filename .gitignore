@@ -1,3 +1,4 @@
 node_modules/
 dist/
-logMyGameStructure.js
+/logMyGameStructure.js
+/package-lock.json

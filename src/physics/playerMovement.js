@@ -1,21 +1,20 @@
 import Matter from 'matter-js';
 
-export function initMovement(sceneObjects, app) {
+export function initMovement(sceneObjects, app, engine) {
     let moveRight = false;
     let moveLeft = false;
-    let moveUp = false;
-    let moveDown = false;
-    const spd = 5; //  Скорость движения
+    let isJumping = false; // Флаг для отслеживания прыжка
+    const spd = 5; // Скорость движения
+    const jumpForce = 16; // Сила прыжка
 
     const handleKeyDown = (event) => {
         if (event.key === 'ArrowRight' || event.key === 'd') {
             moveRight = true;
         } else if (event.key === 'ArrowLeft' || event.key === 'a') {
             moveLeft = true;
-        } else if (event.key === 'ArrowUp' || event.key === 'w') {
-            moveUp = true;
-        } else if (event.key === 'ArrowDown' || event.key === 's') {
-            moveDown = true;
+        } else if ((event.key === 'ArrowUp' || event.key === 'w' || event.key === ' ') && sceneObjects.catBody.isOnGround) {
+            isJumping = true;
+            sceneObjects.catBody.isOnGround = false;
         }
     };
 
@@ -24,27 +23,48 @@ export function initMovement(sceneObjects, app) {
             moveRight = false;
         } else if (event.key === 'ArrowLeft' || event.key === 'a') {
             moveLeft = false;
-        } else if (event.key === 'ArrowUp' || event.key === 'w') {
-            moveUp = false;
-        } else if (event.key === 'ArrowDown' || event.key === 's') {
-            moveDown = false;
         }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
 
+    // Добавляем слушатель коллизий
+    Matter.Events.on(engine, 'collisionStart', (event) => {
+        const pairs = event.pairs;
+
+        for (let i = 0, j = pairs.length; i != j; ++i) {
+            let pair = pairs[i];
+
+            // Если кот сталкивается с землей, разрешаем прыгать
+            if ((pair.bodyA === sceneObjects.catBody && pair.bodyB.isStatic) ||
+                (pair.bodyB === sceneObjects.catBody && pair.bodyA.isStatic)) {
+                const normal = pair.collision.normal;
+                // Проверяем, что столкновение происходит снизу
+                if (normal.y < -0.8) {
+                    sceneObjects.catBody.isOnGround = true;
+                }
+            }
+        }
+    });
+
     function playerMovement() {
+        let velocityX = 0;
+
         if (moveRight) {
-            Matter.Body.setVelocity(sceneObjects.catBody, { x: spd, y: sceneObjects.catBody.velocity.y });
+            velocityX += spd;
         }
         if (moveLeft) {
-            Matter.Body.setVelocity(sceneObjects.catBody, { x: -spd, y: sceneObjects.catBody.velocity.y });
+            velocityX -= spd;
         }
-        if (moveUp) {
-            // Здесь код для прыжка, который у вас был закомментирован.
-            // Реализуйте его, если нужно, адаптировав под Matter.js.
+
+        // Прыжок
+        if (isJumping) {
+            Matter.Body.setVelocity(sceneObjects.catBody, { x: sceneObjects.catBody.velocity.x, y: -jumpForce });
+            isJumping = false; // Сбрасываем флаг прыжка
         }
+
+        Matter.Body.setVelocity(sceneObjects.catBody, { x: velocityX, y: sceneObjects.catBody.velocity.y });
     }
 
     return {
@@ -54,6 +74,8 @@ export function initMovement(sceneObjects, app) {
         cleanup: () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
+            // Удаляем слушатель коллизий
+            Matter.Events.off(engine, 'collisionStart');
         }
     };
 }
