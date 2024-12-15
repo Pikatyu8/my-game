@@ -4,6 +4,7 @@ import { log } from './utils/utils.js';
 import Matter from 'matter-js';
 import { setupScene } from './physics/sceneSetup.js';
 import { initPhysics } from './physics/physicsInit.js';
+import { initMovement } from './physics/playerMovement.js';
 
 export class Game {
     constructor() {
@@ -17,16 +18,23 @@ export class Game {
 
                 this.renderer = initGraphics(this.app);
 
-                // Настройка сцены
+                // Перемещаем вызов setupScene в then после loadResources
+                // Настройка сцены (после загрузки ресурсов)
                 this.sceneObjects = setupScene(this.app, this.catTexture, this.matterEngine);
 
                 // Инициализация физики
                 this.physicsUpdater = initPhysics(this.matterEngine, this.sceneObjects);
 
-                // Добавляем функцию обновления физики в ticker (теперь обновляем через ticker Pixi)
-                 this.app.ticker.add((delta) => {
+                // Добавляем управление игроком
+                this.playerMovement = initMovement(this.sceneObjects, this.app); // Исправлено: передаем this.sceneObjects
+
+                // Добавляем функцию обновления в ticker
+                this.app.ticker.add((delta) => {
                     if (this.physicsUpdater && this.physicsUpdater.update) {
                         this.physicsUpdater.update(delta);
+                    }
+                    if (this.playerMovement && this.playerMovement.update) {
+                        this.playerMovement.update();
                     }
                 });
 
@@ -46,10 +54,8 @@ export class Game {
 
     async loadResources() {
         try {
-            const catAsset = await PIXI.Assets.load('/cat.png');
-            this.catTexture = catAsset;
+            this.catTexture = await PIXI.Assets.load('/cat.png');
             log('Resource loaded');
-
         } catch (error) {
             log(`Error loading resources: ${error}`);
         }
@@ -70,5 +76,11 @@ export class Game {
         document.body.appendChild(this.gameContainer);
         this.gameContainer.appendChild(this.app.canvas);
         log('Game container created and appended to DOM');
+    }
+
+    destroy() {
+        if (this.playerMovement) {
+            this.playerMovement.cleanup();
+        }
     }
 }

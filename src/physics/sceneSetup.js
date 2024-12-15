@@ -24,21 +24,40 @@ export function setupScene(app, catTexture, engine) {
         sprite.width,
         sprite.height,
         {
-            restitution: 0.5 // Коэффициент отскока (0 - 1)
+            restitution: 0.4,
+            friction: 0.8,
+            frictionAir: 0.05,
+            inertia: Infinity // Добавляем инерцию, чтобы кот не вращался
         }
     );
     Matter.World.add(engine.world, catBody);
 
     // Добавляем невидимые границы мира, чтобы кот не улетал за пределы экрана
-    const ground = Matter.Bodies.rectangle(app.renderer.width / 2, app.renderer.height - 10, app.renderer.width, 20, { isStatic: true });
-    const leftWall = Matter.Bodies.rectangle(0, app.renderer.height / 2, 10, app.renderer.height, { isStatic: true });
-    const rightWall = Matter.Bodies.rectangle(app.renderer.width, app.renderer.height / 2, 10, app.renderer.height, { isStatic: true });
-    const ceiling = Matter.Bodies.rectangle(app.renderer.width/2, 10, app.renderer.width, 20, { isStatic: true });
+    const ground = Matter.Bodies.rectangle(app.renderer.width / 2, app.renderer.height - 10, app.renderer.width, 20, {
+        isStatic: true,
+        render: { fillStyle: 'green' },
+        friction: 1, // Высокое трение для пола
+    });
+    const leftWall = Matter.Bodies.rectangle(0, app.renderer.height / 2, 10, app.renderer.height, {
+        isStatic: true,
+        render: { fillStyle: 'green' },
+        friction: 0, // Убираем трение у стен
+    });
+    const rightWall = Matter.Bodies.rectangle(app.renderer.width, app.renderer.height / 2, 10, app.renderer.height, {
+        isStatic: true,
+        render: { fillStyle: 'green' },
+        friction: 0, // Убираем трение у стен
+    });
+    const ceiling = Matter.Bodies.rectangle(app.renderer.width / 2, 10, app.renderer.width, 20, {
+        isStatic: true,
+        render: { fillStyle: 'green' },
+        friction: 0, // Убираем трение у потолка
+    });
     Matter.World.add(engine.world, [ground, leftWall, rightWall, ceiling]);
 
     // Создаем графические объекты для стен
     const wallGraphics = new PIXI.Graphics();
-    wallGraphics.beginFill(0x00FF00); // Зеленый цвет
+    wallGraphics.beginFill(0x80FF80); // Светло-зеленый цвет
 
     // Рисуем стены с учетом их ширины и высоты
     wallGraphics.drawRect(ground.position.x - app.renderer.width / 2, ground.position.y - 10, app.renderer.width, 20); // Пол
